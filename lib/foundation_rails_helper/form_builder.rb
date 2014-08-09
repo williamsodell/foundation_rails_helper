@@ -119,7 +119,7 @@ module FoundationRailsHelper
           attribute.to_s.humanize
         end
       end
-      text = block.call.html_safe + " #{text}" if block_given?
+      text = "#{text}" + block.call.html_safe if block_given?
       options ||= {}
       options[:class] ||= ""
       options[:class] += " error" if has_error?(attribute)
@@ -135,15 +135,25 @@ module FoundationRailsHelper
 
     def field(attribute, options, html_options=nil, &block)
       html = ''.html_safe
-      html = custom_label(attribute, options[:label], options[:label_options]) if @options[:auto_labels] || options[:label]
-      class_options = html_options || options
-      class_options[:class] ||= "medium"
-      class_options[:class] = "#{class_options[:class]} input-text"
-      class_options[:class] += " error" if has_error?(attribute)
-      options.delete(:label)
-      options.delete(:label_options)
-      html += yield(class_options)
+      if @options[:auto_labels] || options[:label]
+        html = custom_label(attribute, options[:label], options[:label_options]) do 
+          field_sub(attribute, options, html_options=nil, &block)
+        end
+      else
+        html = field_sub(attribute, options, html_options=nil, &block)
+      end
+
       html += error_and_hint(attribute, options)
+    end
+
+    def field_sub(attribute, options, html_options=nil, &block)
+        class_options = html_options || options
+        class_options[:class] ||= "medium"
+        class_options[:class] = "#{class_options[:class]} input-text"
+        class_options[:class] += " error" if has_error?(attribute)
+        options.delete(:label)
+        options.delete(:label_options)
+        yield(class_options)
     end
   end
 end
